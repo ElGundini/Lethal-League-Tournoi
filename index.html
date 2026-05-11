@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LETHAL LEAGUE - TOURNAMENT MANAGER</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;900&family=Roboto:wght@300;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0a0a0a;
+            --primary: #ffcc00;
+            --secondary: #ff3300;
+            --accent: #00ffcc;
+            --card-bg: #151515;
+            --text: #ffffff;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text);
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-image: linear-gradient(rgba(0,0,0,0.8), rgba(0,0,0,0.8)), url('https://www.transparenttextures.com/patterns/carbon-fibre.png');
+        }
+
+        .container { max-width: 1100px; margin: 0 auto; text-align: center; }
+
+        header img {
+            max-width: 280px;
+            filter: drop-shadow(0 0 8px var(--primary));
+            margin: 20px 0;
+        }
+
+        h2 { 
+            font-family: 'Orbitron', sans-serif; 
+            text-transform: uppercase; 
+            color: var(--primary); 
+            letter-spacing: 2px;
+            margin-top: 30px;
+            border-left: 5px solid var(--secondary);
+            padding-left: 15px;
+            display: inline-block;
+        }
+
+        .btn {
+            background: var(--primary);
+            color: black;
+            border: none;
+            padding: 15px 30px;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 900;
+            cursor: pointer;
+            transition: 0.2s;
+            margin: 20px;
+            clip-path: polygon(10% 0, 100% 0, 90% 100%, 0 100%);
+        }
+
+        .btn:hover { background: var(--accent); transform: scale(1.05); }
+
+        /* CLASSEMENT */
+        .table-container { overflow-x: auto; margin-top: 20px; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--card-bg);
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+
+        th, td { padding: 12px; border: 1px solid #222; text-align: center; }
+        th { background: #111; color: var(--accent); font-family: 'Orbitron'; font-size: 0.8rem; }
+        
+        .top-qualified { border-left: 4px solid var(--accent); }
+        .eliminated { opacity: 0.4; background: #000; }
+
+        /* MATCHS GRID */
+        #match-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .match-card {
+            background: #1a1a1a;
+            padding: 15px;
+            border-top: 3px solid var(--primary);
+            text-align: left;
+            position: relative;
+        }
+
+        .match-card::after {
+            content: "1V1V1V1";
+            position: absolute;
+            top: 5px; right: 5px;
+            font-size: 10px; color: #444; font-family: 'Orbitron';
+        }
+
+        .match-number { color: var(--primary); font-family: 'Orbitron'; font-size: 0.9rem; margin-bottom: 10px; display: block; }
+
+        .player-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            padding: 4px;
+            border-bottom: 1px solid #222;
+        }
+
+        select {
+            background: #000;
+            color: var(--accent);
+            border: 1px solid #333;
+            font-size: 0.8rem;
+        }
+
+        /* BRACKET */
+        .bracket {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 40px;
+            gap: 10px;
+        }
+
+        .phase { flex: 1; display: flex; flex-direction: column; gap: 20px; }
+        
+        .match-box {
+            background: #111;
+            border: 1px solid var(--accent);
+            padding: 10px;
+            min-height: 80px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .match-box span {
+            padding: 8px;
+            cursor: pointer;
+            transition: 0.3s;
+            font-weight: bold;
+            display: block;
+        }
+
+        .match-box span:hover { background: var(--accent); color: #000; }
+        .vs { color: var(--secondary); font-size: 10px; margin: 5px 0; font-family: 'Orbitron'; }
+
+        .winner-display {
+            font-family: 'Orbitron';
+            font-size: 2.5rem;
+            color: var(--primary);
+            margin: 40px 0;
+            text-shadow: 0 0 20px var(--primary);
+            display: none;
+        }
+		/* Animation des Confettis */
+.confetti {
+    position: fixed;
+    width: 10px;
+    height: 10px;
+    background-color: var(--primary);
+    top: -10px;
+    z-index: 9999;
+    pointer-events: none;
+    opacity: 0.8;
+    border-radius: 2px;
+    animation: fall linear forwards;
+}
+
+@keyframes fall {
+    to {
+        transform: translateY(105vh) rotate(360deg);
+    }
+}
+/* Style de l'explication du format */
+.format-card {
+    background: rgba(21, 21, 21, 0.9);
+    border: 2px solid var(--primary);
+    max-width: 600px;
+    margin: 30px auto;
+    padding: 0;
+    text-align: left;
+    box-shadow: 10px 10px 0px var(--secondary);
+}
+
+.format-header {
+    background: var(--primary);
+    color: black;
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 900;
+    padding: 10px 20px;
+    font-size: 1.2rem;
+}
+
+.format-grid {
+    padding: 20px;
+}
+
+.format-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.format-icon {
+    font-size: 1.5rem;
+    margin-right: 15px;
+    filter: drop-shadow(0 0 5px var(--accent));
+}
+
+.format-text {
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+.format-text strong {
+    display: block;
+    color: var(--accent);
+    text-transform: uppercase;
+    font-family: 'Orbitron';
+    font-size: 0.8rem;
+    margin-bottom: 3px;
+}
+/* Style des messages d'encouragement */
+.cheer-popup {
+    position: fixed;
+    pointer-events: none;
+    z-index: 10000;
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 900;
+    text-transform: uppercase;
+    white-space: nowrap;
+    text-shadow: 3px 3px 0px var(--secondary), -1px -1px 0px var(--accent);
+    animation: cheer-appear 1.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+@keyframes cheer-appear {
+    0% { transform: scale(0) var(--rotation); opacity: 0; }
+    20% { transform: scale(1.2) var(--rotation); opacity: 1; }
+    80% { transform: scale(1) var(--rotation); opacity: 1; }
+    100% { transform: scale(0.8) var(--rotation) translateY(-50px); opacity: 0; }
+}
+@keyframes shake {
+    0% { transform: translate(1px, 1px) rotate(0deg); }
+    10% { transform: translate(-1px, -2px) rotate(-1deg); }
+    30% { transform: translate(3px, 2px) rotate(0deg); }
+    50% { transform: translate(-1px, 2px) rotate(1deg); }
+    100% { transform: translate(1px, 1px) rotate(0deg); }
+}
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <img src="https://i.ibb.co/4RW5JpL1/kekelanlethalleague.png" alt="Lethal League">
+    </header>
+
+    <div id="setup">
+    <h2 style="border:none">LETHAAAAALLL LEEEAAAAAGUUUUUEEEEEEEEEEeE</h2>
+    <p>Keke lan 2026 edition</p>
+
+    <!-- SECTION FORMAT -->
+    <div class="format-card">
+        <div class="format-header">RÈGLES DU TOURNOI</div>
+        <div class="format-grid">
+            <div class="format-item">
+                <span class="format-icon">🎾</span>
+                <div class="format-text">
+                    <strong>PHASE DE GROUPES</strong>
+                    4 rounds par joueur. Matchs à 4 joueurs simultanés. (1V1V1V1)
+                </div>
+            </div>
+            <div class="format-item">
+                <span class="format-icon">📈</span>
+                <div class="format-text">
+                    <strong>SCORE</strong>
+                    1er: 3pts | 2e: 2pts | 3e: 1pt | 4e: 0pts.
+                </div>
+            </div>
+            <div class="format-item">
+                <span class="format-icon">⚡</span>
+                <div class="format-text">
+                    <strong>QUALIFICATION</strong>
+                    Le TOP 8 s'affronte en Playoffs (Élimination directe / 1V1).
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <button class="btn" onclick="initTournament()">GÉNÉRER LA PHASE DE GROUPE</button>
+</div>
+
+    <div id="group-phase" style="display:none;">
+        <h2>Phase de Groupes</h2>
+        <div id="match-list"></div>
+        
+        <h2>Classement (TOP 8 Qualifiés)</h2>
+        <div class="table-container">
+            <table id="leaderboard">
+                <thead>
+                    <tr>
+                        <th>RANG</th>
+                        <th>JOUEUR</th>
+                        <th>MATCHS</th>
+                        <th>POINTS</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+        
+        <button class="btn" onclick="startPlayoffs()">LANCER LES PLAYOFFS</button>
+    </div>
+
+    <div id="playoff-phase" style="display:none;">
+        <h2>Playoffs - Élimination Directe</h2>
+        <div class="bracket">
+            <div class="phase" id="q-list">
+                <h3>Quarts</h3>
+                <!-- JS -->
+            </div>
+            <div class="phase">
+                <h3>Demis</h3>
+                <div class="match-box">
+                    <span id="d1" onclick="toFinal(this, 'f1')">?</span>
+                    <div class="vs">VS</div>
+                    <span id="d2" onclick="toFinal(this, 'f1')">?</span>
+                </div>
+                <div class="match-box">
+                    <span id="d3" onclick="toFinal(this, 'f2')">?</span>
+                    <div class="vs">VS</div>
+                    <span id="d4" onclick="toFinal(this, 'f2')">?</span>
+                </div>
+            </div>
+            <div class="phase">
+                <h3>Finale</h3>
+                <div class="match-box">
+                    <span id="f1" onclick="declareWinner(this)">?</span>
+                    <div class="vs">VS</div>
+                    <span id="f2" onclick="declareWinner(this)">?</span>
+                </div>
+            </div>
+        </div>
+        <div id="winner-text" class="winner-display"></div>
+        <button class="btn" onclick="location.reload()">RE-INITIALISER</button>
+    </div>
+</div>
+
+<script>
+    const playerNames = ["Adrien", "Mike", "Kevin", "Guillaume", "Yassine", "Patrick", "Joachim", "Alexandre", "Lucas", "Meuble"];
+    let players = [];
+    let matchData = [];
+
+    function initTournament() {
+        document.getElementById('setup').style.display = 'none';
+        document.getElementById('group-phase').style.display = 'block';
+        
+        players = playerNames.map(name => ({ name, points: 0, played: 0 }));
+        
+        // Génération équitable : 10 matchs de 4 joueurs 
+        // Math : 10 joueurs x 4 matchs chacun = 40 slots. 40 slots / 4 joueurs par match = 10 matchs parfaits.
+        let deck = [];
+        for(let r=0; r<4; r++) { // 4 rounds
+            let roundDeck = [...playerNames].sort(() => Math.random() - 0.5);
+            deck.push(...roundDeck);
+        }
+
+        for(let i=0; i<10; i++) {
+            matchData.push({
+                id: i+1,
+                players: deck.slice(i*4, (i*4)+4)
+            });
+        }
+        
+        renderMatches();
+        updateLeaderboard();
+    }
+
+    function renderMatches() {
+        const container = document.getElementById('match-list');
+        container.innerHTML = matchData.map(m => `
+            <div class="match-card">
+                <span class="match-number">Match ${m.id}</span>
+                ${m.players.map(p => `
+                    <div class="player-row">
+                        <span>${p}</span>
+                        <select onchange="calculateScore()">
+                            <option value="0" data-p="${p}">Rang</option>
+                            <option value="3" data-p="${p}">1er (3pts)</option>
+                            <option value="2" data-p="${p}">2e (2pts)</option>
+                            <option value="1" data-p="${p}">3e (1pt)</option>
+                            <option value="0" data-p="${p}">4e (0pts)</option>
+                        </select>
+                    </div>
+                `).join('')}
+            </div>
+        `).join('');
+    }
+
+    function calculateScore() {
+        // Reset scores et compteurs de matchs
+        players.forEach(p => { 
+            p.points = 0; 
+            p.played = 0; 
+        });
+        
+        // Scan tous les menus de sélection
+        const selects = document.querySelectorAll('select');
+        selects.forEach(s => {
+            // On vérifie si un rang a été sélectionné (différent de 0 ou index 0)
+            if(s.selectedIndex !== 0) {
+                const val = parseInt(s.value);
+                const name = s.options[s.selectedIndex].getAttribute('data-p');
+                let pObj = players.find(pl => pl.name === name);
+                
+                if (pObj) {
+                    pObj.points += val;
+                    pObj.played += 1; // On incrémente le nombre de matchs joués
+                }
+            }
+        });
+
+        updateLeaderboard();
+    }
+
+    function updateLeaderboard() {
+        const tbody = document.querySelector('#leaderboard tbody');
+        // On trie par points, puis par matchs joués en cas d'égalité
+        players.sort((a, b) => b.points - a.points || b.played - a.played);
+        
+        tbody.innerHTML = players.map((p, i) => `
+            <tr class="${i < 8 ? 'top-qualified' : 'eliminated'}">
+                <td>${i + 1}</td>
+                <td>${p.name}</td>
+                <td>${p.played} / 4</td> 
+                <td>${p.points}</td>
+            </tr>
+        `).join('');
+    }
+
+    function startPlayoffs() {
+        document.getElementById('group-phase').style.display = 'none';
+        document.getElementById('playoff-phase').style.display = 'block';
+        
+        const top8 = players.slice(0, 8).map(p => p.name);
+        const qContainer = document.getElementById('q-list');
+        
+        // Seedings: 1v8, 4v5, 2v7, 3v6
+        const seeds = [[0,7, 'd1'], [3,4, 'd2'], [1,6, 'd3'], [2,5, 'd4']];
+        
+        qContainer.innerHTML = '<h3>Quarts</h3>';
+        seeds.forEach(s => {
+            qContainer.innerHTML += `
+                <div class="match-box">
+                    <span onclick="toSemi('${top8[s[0]]}', '${s[2]}')">${top8[s[0]]}</span>
+                    <div class="vs">VS</div>
+                    <span onclick="toSemi('${top8[s[1]]}', '${s[2]}')">${top8[s[1]]}</span>
+                </div>
+            `;
+        });
+    }
+
+    function toSemi(name, targetId) {
+        document.getElementById(targetId).innerText = name;
+        document.getElementById(targetId).style.color = "var(--accent)";
+    }
+
+    function toFinal(el, targetId) {
+        if(el.innerText === "?") return;
+        document.getElementById(targetId).innerText = el.innerText;
+        document.getElementById(targetId).style.color = "var(--primary)";
+    }
+
+    function declareWinner(el) {
+    if(el.innerText === "?") return;
+    const winDiv = document.getElementById('winner-text');
+    winDiv.innerText = "🏆 WINNER: " + el.innerText;
+    winDiv.style.display = "block";
+
+    // Explosion de victoire !
+    for(let i = 0; i < 100; i++) {
+        setTimeout(createConfetti, Math.random() * 1000);
+    }
+    
+    // Petit effet de secousse sur l'écran
+    document.body.style.animation = "shake 0.5s";
+    setTimeout(() => document.body.style.animation = "", 500);
+}
+	function createConfetti() {
+    const colors = ['#ffcc00', '#ff3300', '#00ffcc', '#ffffff'];
+    const confetti = document.createElement('div');
+    confetti.classList.add('confetti');
+    
+    // Position horizontale aléatoire
+    confetti.style.left = Math.random() * 100 + "vw";
+    
+    // Taille aléatoire
+    const size = Math.random() * 8 + 5 + "px";
+    confetti.style.width = size;
+    confetti.style.height = size;
+    
+    // Couleur aléatoire parmi le thème
+    confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+    
+    // Vitesse de chute aléatoire (entre 3s et 7s)
+    const duration = Math.random() * 4 + 3;
+    confetti.style.animationDuration = duration + "s";
+    
+    document.body.appendChild(confetti);
+
+    // Supprimer l'élément après l'animation pour ne pas surcharger le navigateur
+    setTimeout(() => {
+        confetti.remove();
+    }, duration * 1000);
+}
+
+
+// Lancer la pluie de confettis (un nouveau petit carré toutes les 300ms)
+setInterval(createConfetti, 300);
+const cheerTemplates = [
+        "T'es le best [NAME] !!",
+        "#Team[NAME]",
+        "ALLEZ [NAME] !!",
+        "[NAME] IS ON FIRE !",
+        "DÉFONCE-LES [NAME] !",
+        "GET REKT [NAME] !",
+		"Je te pisse à la raie [NAME] !",
+        "GO GO GO [NAME] !",
+        "J'ai misé 50 balles sur [NAME] !",		
+        "Tellement GUcci ce [NAME] !",
+		"INCROYYYABLE!",
+		"A GAUUCHHE",
+		"Je l'ai dit Bordel",
+		"[NAME] va le faire",
+		"ON VEUT PLUS DE TRUCS",
+		"on va boire un godet ?",
+		"je mouille pour [NAME]",
+		"NIQUE LUI SA GRAND MERE [NAME] !!!!",
+		"[NAME] VA TOUT CASSER !",
+		"C'EST LE MOMENT [NAME] ! GO !",
+		"FORCE ET HONNEUR, [NAME] !",
+		"SMASH ULTIME DE [NAME] !",
+		"[NAME] : RÉFLEXES DE DIEU !",
+		"C'ÉTAIT QUOI CE SWING, [NAME] ?!",
+		"[NAME] MOMENT !",
+		"[NAME] > TOUT LE MONDE ICI !",
+		"GOAT [NAME] !",
+		"WOUHOUUUU [NAME] !",	
+		"EZ PZ POUR [NAME] !",
+		"je mouille pour [NAME]",
+		"RIP l'adversaire de [NAME]",
+		"C'est un bot, [NAME] ?",
+		"Diff de skill : [NAME]",
+		"MAX SPEED [NAME] !",
+		"SWING ! [NAME] !",
+		"1 MILLION KM/H [NAME] !!",
+		"Ohhh my gaaaaad",
+		"[NAME], le MVP de mon <3",
+		"MONSTRUEUX [NAME]",
+		"Stop le choke, [NAME] !",
+		"GODLIKE [NAME]",
+		"Report [NAME] (Cheater)",
+		"Trop de génie chez [NAME]",
+		"La foule est en liesse",
+		"NICE HACK [NAME]"
+    ];
+
+    function spawnCheer() {
+        // On ne spawn des messages que si le tournoi a commencé
+        if (playerNames.length === 0) return;
+
+        const container = document.body;
+        const cheerEl = document.createElement('div');
+        cheerEl.classList.add('cheer-popup');
+
+        // Choisir un joueur et un message au hasard
+        const randomPlayer = playerNames[Math.floor(Math.random() * playerNames.length)];
+        const randomTemplate = cheerTemplates[Math.floor(Math.random() * cheerTemplates.length)];
+        
+        cheerEl.innerText = randomTemplate.replace("[NAME]", randomPlayer);
+
+        // Position aléatoire sur l'écran (en évitant trop les bords)
+        const x = Math.random() * 60 + 20; // Entre 20% et 80% de la largeur
+        const y = Math.random() * 60 + 20; // Entre 20% et 80% de la hauteur
+        
+        cheerEl.style.left = x + "vw";
+        cheerEl.style.top = y + "vh";
+        
+        // Taille et couleur aléatoire (Jaune ou Cyan)
+        const size = Math.random() * 1.5 + 1; // Entre 1rem et 2.5rem
+        cheerEl.style.fontSize = size + "rem";
+        cheerEl.style.color = Math.random() > 0.5 ? "var(--primary)" : "var(--accent)";
+		// Génère un angle entre -20 et +20 degrés
+const randomAngle = Math.floor(Math.random() * 40) - 20;
+
+// On injecte cet angle dans une variable CSS spécifique à ce popup
+cheerEl.style.setProperty('--rotation', `rotate(${randomAngle}deg)`);
+
+// Optionnel : on peut aussi varier légèrement l'échelle de base
+const randomScale = Math.random() * 0.4 + 0.8;
+
+        container.appendChild(cheerEl);
+
+        // Nettoyage
+        setTimeout(() => cheerEl.remove(), 1500);
+
+        // Programmer le prochain message (entre 3 et 8 secondes)
+        setTimeout(spawnCheer, Math.random() * 1000 + 1000);
+    }
+
+    // Lancer la boucle au chargement
+    spawnCheer();
+</script>
+
+</body>
+</html>
